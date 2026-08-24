@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trung Tâm Giám Sát & Điều Khiển Giao Thông IoT</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #0b1329;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .dashboard {
+            background-color: #1e293b;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+        }
+        .header h1 {
+            font-size: 1.2rem;
+            color: #38bdf8;
+            text-align: center;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+        }
+        
+        .traffic-box {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .lights {
+            display: flex;
+            gap: 12px;
+            background: #020617;
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid #1e293b;
+        }
+        .light {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            opacity: 0.15;
+            transition: all 0.2s ease;
+        }
+        .light.red { background-color: #ef4444; }
+        .light.yellow { background-color: #eab308; }
+        .light.green { background-color: #22c55e; }
+        
+        .light.red.active { opacity: 1; box-shadow: 0 0 16px #ef4444; }
+        .light.yellow.active { opacity: 1; box-shadow: 0 0 16px #eab308; }
+        .light.green.active { opacity: 1; box-shadow: 0 0 16px #22c55e; }
+
+        .countdown-box { text-align: right; }
+        .countdown-val {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #f8fafc;
+            line-height: 1;
+        }
+        .countdown-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .card {
+            background-color: #0f172a;
+            border-radius: 12px;
+            padding: 14px;
+            border: 1px solid #334155;
+            text-align: center;
+        }
+        .card-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .card-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #38bdf8;
+        }
+        .card-unit { font-size: 0.85rem; color: #64748b; font-weight: normal; }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .badge-auto { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
+        .badge-priority { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
+        .badge-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+        .btn-priority { background-color: #ef4444; color: white; }
+        .btn-priority:hover { background-color: #dc2626; }
+        .btn-auto { background-color: #0284c7; color: white; }
+        .btn-auto:hover { background-color: #0369a1; }
+        .footer { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <h1>Giám Sát & Điều Khiển Giao Thông</h1>
+    </div>
+
+    <!-- KHỐI ĐÈN TÍN HIỆU & ĐẾM NGƯỢC -->
+    <div class="traffic-box">
+        <div class="lights">
+            <div class="light red" id="lightRed"></div>
+            <div class="light yellow" id="lightYellow"></div>
+            <div class="light green" id="lightGreen"></div>
+        </div>
+        <div class="countdown-box">
+            <div class="countdown-val" id="valCountdown">--</div>
+            <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
+        </div>
+    </div>
+
+    <!-- CÁC THÔNG SỐ TỪ IOT CLOUD -->
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">Khoảng Cách Xe (V0)</div>
+            <div class="card-val" id="valDistance">-- <span class="card-unit">cm</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Thời Gian Chu Kỳ Xanh (V1)</div>
+            <div class="card-val" id="valGreenTime">-- <span class="card-unit">s</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Mật Độ Giao Thông</div>
+            <div class="card-val" id="valDensity" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Chế Độ Hoạt Động (V2)</div>
+            <div style="margin-top: 4px;">
+                <span id="badgePriority" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- NÚT ĐIỀU KHIỂN TỪ XA -->
+    <button class="btn btn-priority" onclick="setPriority(1)">🚨 BẬT ƯU TIÊN (XE CẤP CỨU)</button>
+    <button class="btn btn-auto" onclick="setPriority(0)">🔄 CHUYỂN VỀ TỰ ĐỘNG</button>
+
+    <div class="footer">Đồng bộ dữ liệu thời gian thực từ Blynk IoT Cloud</div>
+</div>
+
+<script>
+    const TOKEN = "hm01vZfjQhtbqJ2CymHYjE0efIz89mf-";
+    const BASE_URL = "https://sgp1.blynk.cloud/external/api";
+
+    let thoiGianXanhCaiDat = 8;
+    let isPriority = false;
+    let isConnected = false;
+    let lastSeenTime = 0; // Lưu mốc thời gian nhận dữ liệu gần nhất
+    let phaHienTai = "XANH";
+    let soGiayDemNguoc = 8;
+
+    // 1. Luồng đếm nhịp & chuyển màu đèn
+    function chayDongHoDemNguoc() {
+        const lRed = document.getElementById("lightRed");
+        const lYel = document.getElementById("lightYellow");
+        const lGrn = document.getElementById("lightGreen");
+        const lblState = document.getElementById("lblTrafficState");
+        const valCount = document.getElementById("valCountdown");
+        const badge = document.getElementById("badgePriority");
+
+        // Nếu quá 3 giây không nhận được tín hiệu từ Wokwi -> Ngắt ngay lập tức
+        if (Date.now() - lastSeenTime > 2000) {
+            isConnected = false;
+            lRed.className = "light red";
+            lYel.className = "light yellow";
+            lGrn.className = "light green";
+            lblState.innerText = "MẤT KẾT NỐI (OFFLINE)";
+            lblState.style.color = "#ef4444";
+            valCount.innerText = "--";
+            valCount.style.color = "#64748b";
+            badge.innerText = "OFFLINE (DỪNG)";
+            badge.className = "badge badge-offline";
+            return;
+        }
+
+        isConnected = true;
+
+        if (isPriority) {
+            lRed.className = "light red";
+            lYel.className = "light yellow";
+            lGrn.className = "light green active";
+            lblState.innerText = "ƯU TIÊN CẤP CỨU";
+            lblState.style.color = "#ef4444";
+            valCount.innerText = "PASS";
+            valCount.style.color = "#4ade80";
+            return;
+        }
+
+        valCount.innerText = `${soGiayDemNguoc}s`;
+        valCount.style.color = "#f8fafc";
+
+        lRed.className = "light red";
+        lYel.className = "light yellow";
+        lGrn.className = "light green";
+
+        if (phaHienTai === "XANH") {
+            lGrn.className = "light green active";
+            lblState.innerText = "ĐANG ĐÈN XANH";
+            lblState.style.color = "#4ade80";
+        } else if (phaHienTai === "VANG") {
+            lYel.className = "light yellow active";
+            lblState.innerText = "ĐANG ĐÈN VÀNG";
+            lblState.style.color = "#eab308";
+        } else if (phaHienTai === "DO") {
+            lRed.className = "light red active";
+            lblState.innerText = "ĐANG ĐÈN ĐỎ";
+            lblState.style.color = "#ef4444";
+        }
+
+        soGiayDemNguoc--;
+
+        if (soGiayDemNguoc < 0) {
+            if (phaHienTai === "XANH") {
+                phaHienTai = "VANG";
+                soGiayDemNguoc = 2;
+            } else if (phaHienTai === "VANG") {
+                phaHienTai = "DO";
+                soGiayDemNguoc = 5;
+            } else if (phaHienTai === "DO") {
+                phaHienTai = "XANH";
+                soGiayDemNguoc = thoiGianXanhCaiDat;
+            }
+        }
+    }
+
+    // 2. Nhận dữ liệu định kỳ từ Blynk Cloud
+    async function docDuLieuBlynk() {
+        try {
+            // Kiểm tra trạng thái thiết bị
+            const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
+            if (resStatus.ok) {
+                const statusText = (await resStatus.text()).trim();
+                if (statusText === "true") {
+                    lastSeenTime = Date.now(); // Cập nhật nhịp tim còn sống
+                }
+            }
+
+            // Đọc Khoảng cách (V0)
+            const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
+            if (resV0.ok) {
+                const dist = parseInt(await resV0.text());
+                document.getElementById("valDistance").innerHTML = `${dist} <span class="card-unit">cm</span>`;
+                
+                const densityEl = document.getElementById("valDensity");
+                if (dist < 10) {
+                    densityEl.innerText = "CAO (ÙN TẮC)";
+                    densityEl.style.color = "#ef4444";
+                    thoiGianXanhCaiDat = 25;
+                } else if (dist < 25) {
+                    densityEl.innerText = "TRUNG BÌNH";
+                    densityEl.style.color = "#facc15";
+                    thoiGianXanhCaiDat = 15;
+                } else {
+                    densityEl.innerText = "THẤP (VẮNG XE)";
+                    densityEl.style.color = "#4ade80";
+                    thoiGianXanhCaiDat = 8;
+                }
+                document.getElementById("valGreenTime").innerHTML = `${thoiGianXanhCaiDat} <span class="card-unit">s</span>`;
+            }
+
+            // Đọc Chế độ ưu tiên (V2)
+            const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
+            if (resV2.ok) {
+                const prio = await resV2.text();
+                const badge = document.getElementById("badgePriority");
+                if (isConnected) {
+                    if (prio === "1") {
+                        isPriority = true;
+                        badge.innerText = "🚨 KHẨN CẤP";
+                        badge.className = "badge badge-priority";
+                    } else {
+                        isPriority = false;
+                        badge.innerText = "TỰ ĐỘNG THÍCH ỨNG";
+                        badge.className = "badge badge-auto";
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Lỗi đồng bộ:", e);
+        }
+    }
+
+    async function setPriority(val) {
+        if (!isConnected) {
+            alert("Hệ thống đang Offline, không thể gửi lệnh!");
+            return;
+        }
+        try {
+            await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${val}`);
+            isPriority = (val === 1);
+            if (!isPriority) {
+                phaHienTai = "XANH";
+                soGiayDemNguoc = thoiGianXanhCaiDat;
+            }
+            docDuLieuBlynk();
+        } catch (e) {
+            alert("Lỗi gửi lệnh!");
+        }
+    }
+
+    setInterval(chayDongHoDemNguoc, 1000);
+    setInterval(docDuLieuBlynk, 1000);
+
+    docDuLieuBlynk();
+</script>
+
+</body>
+</html>
