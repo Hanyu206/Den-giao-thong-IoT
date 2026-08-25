@@ -194,12 +194,12 @@
     let thoiGianXanhCaiDat = 8;
     let isPriority = false;
     let isConnected = false;
-    let lastSeenTime = 0; // Lưu mốc thời gian nhận dữ liệu gần nhất
+    let lastSeenTime = 0;
     let phaHienTai = "XANH";
     let soGiayDemNguoc = 8;
 
-    // 1. Luồng đếm nhịp & chuyển màu đèn
-    function chayDongHoDemNguoc() {
+    // Chỉ hiển thị theo dữ liệu thật đọc từ V3/V4, không tự đếm lùi
+    function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
         const lYel = document.getElementById("lightYellow");
         const lGrn = document.getElementById("lightGreen");
@@ -207,7 +207,6 @@
         const valCount = document.getElementById("valCountdown");
         const badge = document.getElementById("badgePriority");
 
-        // Nếu quá 3 giây không nhận được tín hiệu từ Wokwi -> Ngắt ngay lập tức
         if (Date.now() - lastSeenTime > 2000) {
             isConnected = false;
             lRed.className = "light red";
@@ -224,9 +223,11 @@
 
         isConnected = true;
 
-        if (isPriority) {
-            lRed.className = "light red";
-            lYel.className = "light yellow";
+        lRed.className = "light red";
+        lYel.className = "light yellow";
+        lGrn.className = "light green";
+
+        if (phaHienTai === "UU TIEN") {
             lGrn.className = "light green active";
             lblState.innerText = "ƯU TIÊN CẤP CỨU";
             lblState.style.color = "#ef4444";
@@ -237,10 +238,6 @@
 
         valCount.innerText = `${soGiayDemNguoc}s`;
         valCount.style.color = "#f8fafc";
-
-        lRed.className = "light red";
-        lYel.className = "light yellow";
-        lGrn.className = "light green";
 
         if (phaHienTai === "XANH") {
             lGrn.className = "light green active";
@@ -255,59 +252,46 @@
             lblState.innerText = "ĐANG ĐÈN ĐỎ";
             lblState.style.color = "#ef4444";
         }
-
-        soGiayDemNguoc--;
-
-        if (soGiayDemNguoc < 0) {
-            if (phaHienTai === "XANH") {
-                phaHienTai = "VANG";
-                soGiayDemNguoc = 2;
-            } else if (phaHienTai === "VANG") {
-                phaHienTai = "DO";
-                soGiayDemNguoc = 5;
-            } else if (phaHienTai === "DO") {
-                phaHienTai = "XANH";
-                soGiayDemNguoc = thoiGianXanhCaiDat;
-            }
-        }
     }
 
-    // 2. Nhận dữ liệu định kỳ từ Blynk Cloud
+    // Đọc dữ liệu thật định kỳ từ Blynk Cloud
     async function docDuLieuBlynk() {
         try {
-            // Kiểm tra trạng thái thiết bị
             const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
             if (resStatus.ok) {
                 const statusText = (await resStatus.text()).trim();
                 if (statusText === "true") {
-                    lastSeenTime = Date.now(); // Cập nhật nhịp tim còn sống
+                    lastSeenTime = Date.now();
                 }
             }
 
-            // Đọc Khoảng cách (V0)
+            // Khoảng cách (V0)
             const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
             if (resV0.ok) {
                 const dist = parseInt(await resV0.text());
                 document.getElementById("valDistance").innerHTML = `${dist} <span class="card-unit">cm</span>`;
-                
+
                 const densityEl = document.getElementById("valDensity");
                 if (dist < 10) {
                     densityEl.innerText = "CAO (ÙN TẮC)";
                     densityEl.style.color = "#ef4444";
-                    thoiGianXanhCaiDat = 25;
                 } else if (dist < 25) {
                     densityEl.innerText = "TRUNG BÌNH";
                     densityEl.style.color = "#facc15";
-                    thoiGianXanhCaiDat = 15;
                 } else {
                     densityEl.innerText = "THẤP (VẮNG XE)";
                     densityEl.style.color = "#4ade80";
-                    thoiGianXanhCaiDat = 8;
                 }
+            }
+
+            // Thời gian đèn xanh - đọc thật từ V1, KHÔNG tự tính lại
+            const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
+            if (resV1.ok) {
+                thoiGianXanhCaiDat = parseInt(await resV1.text());
                 document.getElementById("valGreenTime").innerHTML = `${thoiGianXanhCaiDat} <span class="card-unit">s</span>`;
             }
 
-            // Đọc Chế độ ưu tiên (V2)
+            // Chế độ ưu tiên (V2)
             const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
             if (resV2.ok) {
                 const prio = await resV2.text();
@@ -324,6 +308,14 @@
                     }
                 }
             }
+
+            // Pha đèn thật (V3) + giây còn lại thật (V4)
+            const resV3 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v3`);
+            const resV4 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v4`);
+            if (resV3.ok && resV4.ok) {
+                phaHienTai = (await resV3.text()).trim();
+                soGiayDemNguoc = parseInt(await resV4.text());
+            }
         } catch (e) {
             console.error("Lỗi đồng bộ:", e);
         }
@@ -336,18 +328,13 @@
         }
         try {
             await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${val}`);
-            isPriority = (val === 1);
-            if (!isPriority) {
-                phaHienTai = "XANH";
-                soGiayDemNguoc = thoiGianXanhCaiDat;
-            }
             docDuLieuBlynk();
         } catch (e) {
             alert("Lỗi gửi lệnh!");
         }
     }
 
-    setInterval(chayDongHoDemNguoc, 1000);
+    setInterval(capNhatGiaoDien, 1000);
     setInterval(docDuLieuBlynk, 1000);
 
     docDuLieuBlynk();
