@@ -19,27 +19,27 @@
     padding: 20px;
 }
         .dashboard {
-            background-color: #1e293b;
+            background-color: #ffffff;
             width: 100%;
             max-width: 480px;
             border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-            border: 1px solid #334155;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
         }
         .header h1 {
             font-size: 1.2rem;
-            color: #38bdf8;
+            color: #0284c7;
             text-align: center;
             margin-bottom: 18px;
             text-transform: uppercase;
         }
         
         .traffic-box {
-            background: #0f172a;
+            background: #f8fafc;
             padding: 16px;
             border-radius: 14px;
-            border: 1px solid #334155;
+            border: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -72,12 +72,12 @@
         .countdown-val {
             font-size: 2.2rem;
             font-weight: bold;
-            color: #f8fafc;
+            color: #0f172a;
             line-height: 1;
         }
         .countdown-label {
             font-size: 0.8rem;
-            color: #94a3b8;
+            color: #64748b;
             margin-top: 4px;
             font-weight: bold;
         }
@@ -89,21 +89,21 @@
             margin-bottom: 16px;
         }
         .card {
-            background-color: #0f172a;
+            background-color: #f8fafc;
             border-radius: 12px;
             padding: 14px;
-            border: 1px solid #334155;
+            border: 1px solid #e2e8f0;
             text-align: center;
         }
         .card-title {
             font-size: 0.8rem;
-            color: #94a3b8;
+            color: #64748b;
             margin-bottom: 6px;
         }
         .card-val {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #38bdf8;
+            color: #0284c7;
         }
         .card-unit { font-size: 0.85rem; color: #64748b; font-weight: normal; }
 
@@ -114,9 +114,9 @@
             font-size: 0.8rem;
             font-weight: bold;
         }
-        .badge-auto { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; }
-        .badge-priority { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid #ef4444; }
-        .badge-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-auto { background: rgba(34, 197, 94, 0.12); color: #16a34a; border: 1px solid #22c55e; }
+        .badge-priority { background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid #ef4444; }
+        .badge-offline { background: rgba(239, 68, 68, 0.12); color: #dc2626; border: 1px solid #ef4444; }
 
         .btn {
             display: block;
@@ -134,7 +134,7 @@
         .btn-priority:hover { background-color: #dc2626; }
         .btn-auto { background-color: #0284c7; color: white; }
         .btn-auto:hover { background-color: #0369a1; }
-        .footer { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 10px; }
+        .footer { text-align: center; font-size: 0.75rem; color: #94a3b8; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -217,7 +217,7 @@
             lblState.innerText = "MẤT KẾT NỐI (OFFLINE)";
             lblState.style.color = "#ef4444";
             valCount.innerText = "--";
-            valCount.style.color = "#64748b";
+            valCount.style.color = "#94a3b8";
             badge.innerText = "OFFLINE (DỪNG)";
             badge.className = "badge badge-offline";
             return;
@@ -234,17 +234,17 @@
             lblState.innerText = "ƯU TIÊN CẤP CỨU";
             lblState.style.color = "#ef4444";
             valCount.innerText = "PASS";
-            valCount.style.color = "#4ade80";
+            valCount.style.color = "#16a34a";
             return;
         }
 
         valCount.innerText = `${soGiayDemNguoc}s`;
-        valCount.style.color = "#f8fafc";
+        valCount.style.color = "#0f172a";
 
         if (phaHienTai === "XANH") {
             lGrn.className = "light green active";
             lblState.innerText = "ĐANG ĐÈN XANH";
-            lblState.style.color = "#4ade80";
+            lblState.style.color = "#16a34a";
         } else if (phaHienTai === "VANG") {
             lYel.className = "light yellow active";
             lblState.innerText = "ĐANG ĐÈN VÀNG";
@@ -276,13 +276,13 @@
                 const densityEl = document.getElementById("valDensity");
                 if (dist < 10) {
                     densityEl.innerText = "CAO (ÙN TẮC)";
-                    densityEl.style.color = "#ef4444";
+                    densityEl.style.color = "#dc2626";
                 } else if (dist < 25) {
                     densityEl.innerText = "TRUNG BÌNH";
-                    densityEl.style.color = "#facc15";
+                    densityEl.style.color = "#b45309";
                 } else {
                     densityEl.innerText = "THẤP (VẮNG XE)";
-                    densityEl.style.color = "#4ade80";
+                    densityEl.style.color = "#16a34a";
                 }
             }
 
